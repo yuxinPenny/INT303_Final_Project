@@ -1,0 +1,67 @@
+# Upload the data and transform the data type
+Data <- read.csv('/home/yuxin/home/yuxin/INT303Project/cardio_train.csv', header = TRUE, sep = ";")
+Data$age <- as.integer(Data$age/365)
+Data$gender <- factor(Data$gender,labels = c("Female","Male"))
+Data$cholesterol <- factor(Data$cholesterol,labels = c("Normal","Above normal","Well above normal"))
+Data$gluc <- factor(Data$gluc,labels = c("Normal","Above normal","Well above normal"))
+Data$smoke <- factor(Data$smoke,labels = c("No","Yes"))
+Data$alco <- factor(Data$alco,labels = c("No","Yes"))
+Data$active <- factor(Data$active,labels = c("No","Yes"))
+Data$cardio <- factor(Data$cardio,labels = c("No","Yes"))
+Data$id <- NULL
+
+# Descriptive data analysis
+summary(Data)
+
+var(Data$age)
+var(Data$height)
+var(Data$weight)
+var(Data$ap_hi)
+var(Data$ap_lo)
+
+# Data cleaning: remove errorneous data and outliers
+outliers_age <- boxplot(Data$age,plot=FALSE)$out
+outliers_aphi <- boxplot(Data$ap_hi,plot=FALSE)$out
+outliers_aplo <- boxplot(Data$ap_lo, plot=FALSE)$out
+outliers_height <- boxplot(Data$height,plot=FALSE)$out
+outliers_weight <- boxplot(Data$weight,plot=FALSE)$out
+outlier_rn <- which(Data$age%in%outliers_age|Data$height%in%outliers_height
+                    |Data$weight%in%outliers_weight|Data$ap_hi%in%outliers_aphi
+                    |Data$ap_lo%in%outliers_aplo)
+Data <- Data[-outlier_rn,]
+
+# Balance the number of cardiovascular and non-cardiovascular patients
+cardio_data <- Data[which(Data$cardio=='Yes'),]
+noncardio_data <- Data[which(Data$cardio=='No'),]
+noncardio_data <- noncardio_data[1:nrow(cardio_data),]
+Data <- rbind(cardio_data,noncardio_data)
+
+# Statistical data analysis
+# T-tests
+t.test(Data$age[which(Data$cardio=='No')], Data$age[which(Data$cardio=='Yes')])
+t.test(Data$ap_lo[which(Data$cardio=='No')], Data$ap_lo[which(Data$cardio=='Yes')])
+t.test(Data$ap_hi[which(Data$cardio=='No')], Data$ap_hi[which(Data$cardio=='Yes')])
+t.test(Data$weight[which(Data$cardio=='No')], Data$weight[which(Data$cardio=='Yes')])
+t.test(Data$height[which(Data$cardio=='No')], Data$height[which(Data$cardio=='Yes')])
+
+Data$BMI <- Data$weight/((Data$height/100)^2)
+t.test(Data$BMI[which(Data$cardio=='No')], Data$BMI[which(Data$cardio=='Yes')])
+
+# Chi-squared test
+contingency <- table(Data$cardio,Data$gender)
+chisq.test(contingency)
+
+contingency <- table(Data$cardio,Data$cholesterol)
+chisq.test(contingency)
+
+contingency <- table(Data$cardio,Data$gluc)
+chisq.test(contingency)
+
+contingency <- table(Data$cardio,Data$active)
+chisq.test(contingency)
+
+contingency <- table(Data$cardio,Data$alco)
+chisq.test(contingency)
+
+contingency <- table(Data$cardio,Data$smoke)
+chisq.test(contingency)
